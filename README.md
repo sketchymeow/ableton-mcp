@@ -11,12 +11,35 @@ processes talking over TCP on localhost:
 - `src/ableton_mcp` is the MCP server. It translates tool calls into bridge
   commands over a length-prefixed JSON protocol.
 
-## Status
+## What it can do
 
-Early. The generic layer works: `ping`, `live_get`, `live_set`, `live_call`,
-and `live_describe` reach the whole Live Object Model through paths like
-`song.tracks[0].devices[0].parameters[3]`. Curated tools for tracks, clips,
-notes, devices, automation, and the browser come next.
+41 tools across two layers.
+
+Curated tools:
+
+- Transport and song: play/stop, tempo, time signature, loop region,
+  quantization, undo/redo, cue points
+- Tracks: create/delete/duplicate (MIDI, audio, return), name/color/arm/
+  mute/solo, monitoring, input/output routing
+- Scenes: create/delete/duplicate/fire
+- Clips: session and arrangement, create/delete/fire, loop points, markers,
+  launch settings, warp/gain/pitch, place session clips on the timeline
+- MIDI notes: read, add, update, and remove by stable note ID, so existing
+  clips can be edited instead of overwritten
+- Mixer: volume, pan, sends, crossfader, with display strings ("0.0 dB")
+- Devices: list (including rack chains and drum pads), read parameters, set
+  by name or option, delete
+- Automation: write/read/clear clip envelopes on any device or mixer
+  parameter
+- Browser: navigate, search, and load instruments/effects/presets onto a
+  track
+
+Generic layer: `live_get`, `live_set`, `live_call`, and `live_describe` reach
+the entire Live Object Model through paths like
+`song.tracks[0].devices[0].parameters[3]`, covering anything the curated
+tools don't.
+
+Not done yet: a change-event feed (listeners) and an installer script.
 
 ## Setup
 
