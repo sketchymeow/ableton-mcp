@@ -5,6 +5,14 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Browser results no longer blow past MCP clients' 1MB tool-result limit:
+  browse output is paged (offset/limit, 500 max) and search results cap
+  at 100
+- README and installer now spell out that the MCP config's --directory is
+  the cloned repo path; the installer prints a filled-in config snippet
+
 ## [0.1.0] - 2026-08-04
 
 Initial release.

@@ -14,12 +14,17 @@ TrackType = Literal["track", "return", "master"]
 def register(mcp):
     @mcp.tool()
     def browse(root: Root = "instruments",
-               path: list[str | int] | None = None) -> dict:
+               path: list[str | int] | None = None,
+               offset: int = 0,
+               limit: int = 200) -> dict:
         """List one level of Live's browser. path drills down from the root
         by item name or index (e.g. ["Operator"] lists Operator's presets).
-        Loadable items have a uri for load_browser_item."""
+        Loadable items have a uri for load_browser_item. Output is paged
+        (max 500 per call); check total and pass offset for the rest."""
         return get_connection().request(
-            "browse", {"root": root, "path": path or []}, timeout=30.0
+            "browse",
+            {"root": root, "path": path or [], "offset": offset, "limit": limit},
+            timeout=30.0,
         )
 
     @mcp.tool()
@@ -30,8 +35,9 @@ def register(mcp):
     ) -> dict:
         """Search the browser by name for loadable devices, presets, and
         sounds. Defaults to instruments/sounds/drums/effects/plugins; pass
-        roots to search elsewhere (e.g. samples). The sweep is budgeted, so
-        truncated=true means narrow the query or browse directly."""
+        roots to search elsewhere (e.g. samples). Results cap at 100 and the
+        sweep is budgeted, so truncated=true means narrow the query or
+        browse directly."""
         params = {"query": query, "max_results": max_results}
         if roots is not None:
             params["roots"] = roots

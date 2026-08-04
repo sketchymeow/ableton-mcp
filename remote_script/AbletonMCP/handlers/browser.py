@@ -32,6 +32,8 @@ DEFAULT_SEARCH_ROOTS = (
 )
 
 SEARCH_NODE_BUDGET = 4000
+MAX_SEARCH_RESULTS = 100
+MAX_BROWSE_ITEMS = 500
 
 
 def _item_summary(item, index=None):
@@ -101,16 +103,23 @@ def register(registry, roots):
                 item = matches[0]
             crumbs.append(common.safe_get(item, "name"))
         children = common.safe_get(item, "children", ())
+        offset = max(0, int(params.get("offset", 0)))
+        limit = max(1, min(int(params.get("limit", 200)), MAX_BROWSE_ITEMS))
         result = []
-        for i, child in enumerate(children):
+        for i, child in enumerate(children[offset : offset + limit]):
             _cache(child)
-            result.append(_item_summary(child, index=i))
-        return {"path": crumbs, "items": result}
+            result.append(_item_summary(child, index=offset + i))
+        return {
+            "path": crumbs,
+            "total": len(children),
+            "offset": offset,
+            "items": result,
+        }
 
     def search(params):
         query = str(common.require(params, "query")).lower()
         root_names = params.get("roots") or list(DEFAULT_SEARCH_ROOTS)
-        max_results = int(params.get("max_results", 25))
+        max_results = max(1, min(int(params.get("max_results", 25)), MAX_SEARCH_RESULTS))
         matches = []
         visited = 0
         truncated = False

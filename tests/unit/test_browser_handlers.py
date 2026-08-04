@@ -26,13 +26,40 @@ def registry(song, app):
 def test_browse_root(registry):
     result = registry.dispatch("browse", {"root": "instruments"})
     assert result["path"] == ["Instruments"]
+    assert result["total"] == 2
     assert [i["name"] for i in result["items"]] == ["Operator", "Analog"]
     assert result["items"][1]["uri"] == "device:analog"
+
+
+def test_browse_paging(registry):
+    result = registry.dispatch(
+        "browse", {"root": "instruments", "offset": 1, "limit": 1}
+    )
+    assert result["total"] == 2
+    assert result["offset"] == 1
+    assert [i["name"] for i in result["items"]] == ["Analog"]
+    assert result["items"][0]["index"] == 1
+
+
+def test_browse_limit_clamped(registry):
+    result = registry.dispatch(
+        "browse", {"root": "instruments", "limit": 100000}
+    )
+    assert len(result["items"]) == 2  # clamp applies, small tree unaffected
+
+
+def test_search_max_results_clamped(registry):
+    # A huge max_results must not produce an unbounded payload.
+    result = registry.dispatch(
+        "search_browser", {"query": "a", "max_results": 100000}
+    )
+    assert len(result["matches"]) <= 100
 
 
 def test_browse_by_name_path(registry):
     result = registry.dispatch("browse", {"root": "instruments", "path": ["operator"]})
     assert [i["name"] for i in result["items"]] == ["Growl Bass"]
+    assert result["total"] == 1
 
 
 def test_browse_by_index_path(registry):
