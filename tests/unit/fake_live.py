@@ -27,10 +27,16 @@ class FakeDeviceParameter:
         return "%.2f x" % value
 
     def add_value_listener(self, callback):
-        pass
+        if not hasattr(self, "_value_listeners"):
+            object.__setattr__(self, "_value_listeners", [])
+        self._value_listeners.append(callback)
 
     def remove_value_listener(self, callback):
-        pass
+        self._value_listeners.remove(callback)
+
+    def fire_value_listeners(self):
+        for callback in getattr(self, "_value_listeners", []):
+            callback()
 
 
 class FakeDevice:
@@ -404,6 +410,7 @@ class FakeSong:
         self.cue_points = FakeVector(cue_points)
         self.master_track = FakeMasterTrack()
         self.view = FakeSongView()
+        self._tempo_listeners = []
         self.started = 0
         self.undone = 0
 
@@ -490,10 +497,14 @@ class FakeSong:
         self.scenes = FakeVector(scenes)
 
     def add_tempo_listener(self, callback):
-        pass
+        self._tempo_listeners.append(callback)
 
     def remove_tempo_listener(self, callback):
-        pass
+        self._tempo_listeners.remove(callback)
+
+    def fire_tempo_listeners(self):
+        for callback in list(self._tempo_listeners):
+            callback()
 
 
 def default_song():
