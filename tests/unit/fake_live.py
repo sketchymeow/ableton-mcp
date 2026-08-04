@@ -6,17 +6,25 @@ class FakeVector(tuple):
 
 
 class FakeDeviceParameter:
-    def __init__(self, name, value=0.0, min=0.0, max=1.0):
+    def __init__(self, name, value=0.0, min=0.0, max=1.0, is_quantized=False,
+                 value_items=()):
         self.name = name
         self.value = value
         self.min = min
         self.max = max
+        self.is_quantized = is_quantized
+        self.value_items = FakeVector(value_items)
 
     def __setattr__(self, key, value):
         # Live rejects ints for float parameters; mimic that strictness.
         if key == "value" and type(value) is int:
             raise TypeError("expected float, got int")
         object.__setattr__(self, key, value)
+
+    def str_for_value(self, value):
+        if self.is_quantized and self.value_items:
+            return self.value_items[int(value)]
+        return "%.2f x" % value
 
     def add_value_listener(self, callback):
         pass
@@ -29,7 +37,37 @@ class FakeDevice:
     def __init__(self, name, parameters=()):
         self.name = name
         self.class_name = "Fake%s" % name
+        self.type = 1
+        self.is_active = True
+        self.can_have_chains = False
+        self.can_have_drum_pads = False
         self.parameters = FakeVector(parameters)
+
+
+class FakeChain:
+    def __init__(self, name, devices=()):
+        self.name = name
+        self.devices = FakeVector(devices)
+
+
+class FakeRackDevice(FakeDevice):
+    def __init__(self, name, chains=(), parameters=()):
+        FakeDevice.__init__(self, name, parameters)
+        self.can_have_chains = True
+        self.chains = FakeVector(chains)
+
+
+class FakeMixerDevice:
+    def __init__(self, num_sends=1, is_master=False):
+        self.volume = FakeDeviceParameter("Volume", 0.85)
+        self.panning = FakeDeviceParameter("Panning", 0.0, -1.0, 1.0)
+        self.sends = FakeVector(
+            FakeDeviceParameter("Send %d" % i, 0.0) for i in range(num_sends)
+        )
+        self.crossfade_assign = 1
+        if is_master:
+            self.cue_volume = FakeDeviceParameter("Cue Volume", 0.85)
+            self.crossfader = FakeDeviceParameter("Crossfader", 0.0, -1.0, 1.0)
 
 
 class FakeMidiNote:
@@ -199,7 +237,13 @@ class FakeTrack:
         self.output_routing_type = self.available_output_routing_types[0]
         self.output_routing_channel = None
         self.arrangement_clips = FakeVector(())
+        self.mixer_device = FakeMixerDevice()
         self.stopped = 0
+
+    def delete_device(self, index):
+        devices = list(self.devices)
+        devices.pop(index)
+        self.devices = FakeVector(devices)
 
     def stop_all_clips(self):
         self.stopped += 1
@@ -225,6 +269,7 @@ class FakeMasterTrack:
         self.mute = False
         self.solo = False
         self.devices = FakeVector(())
+        self.mixer_device = FakeMixerDevice(num_sends=0, is_master=True)
 
 
 class FakeScene:
@@ -379,11 +424,36 @@ def default_song():
                         parameters=(
                             FakeDeviceParameter("Device On", 1.0),
                             FakeDeviceParameter("Dry/Wet", 0.5),
+                            FakeDeviceParameter(
+                                "Mode", 0.0, 0.0, 2.0, is_quantized=True,
+                                value_items=("Low", "Mid", "High"),
+                            ),
                         ),
                     ),
                 ),
             ),
-            FakeTrack("Bass"),
+            FakeTrack(
+                "Bass",
+                devices=(
+                    FakeRackDevice(
+                        "Bass Rack",
+                        chains=(
+                            FakeChain(
+                                "Chain 1",
+                                devices=(
+                                    FakeDevice(
+                                        "Operator",
+                                        parameters=(
+                                            FakeDeviceParameter("Device On", 1.0),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        parameters=(FakeDeviceParameter("Macro 1", 0.0),),
+                    ),
+                ),
+            ),
         ),
         scenes=(FakeScene("Intro"), FakeScene("Drop", tempo=140.0)),
         return_tracks=(FakeTrack("A Reverb"),),
