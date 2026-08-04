@@ -53,14 +53,16 @@ uv run python scripts/install_remote_script.py
 
 2. Restart Live, then pick AbletonMCP as a control surface under
    Settings > Link, Tempo & MIDI.
-3. Register the server with your MCP client:
+3. Register the server with your MCP client. The `--directory` value is the
+   absolute path to this cloned repo (the install script prints a config
+   with the path filled in):
 
 ```json
 {
   "mcpServers": {
     "ableton-live": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/ableton-mcp", "ableton-mcp"]
+      "args": ["run", "--directory", "/Users/you/dev/ableton-mcp", "ableton-mcp"]
     }
   }
 }

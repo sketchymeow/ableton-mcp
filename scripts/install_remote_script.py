@@ -62,12 +62,22 @@ def main() -> int:
         )
         print(f"Copied {SOURCE} -> {target}")
 
+    repo = SOURCE.parents[1]
     print(
         "\nNext steps:\n"
         "  1. Restart Ableton Live.\n"
         "  2. Settings > Link, Tempo & MIDI > Control Surface > AbletonMCP.\n"
         "  3. Look for 'AbletonMCP: listening on 127.0.0.1:9877' in Live's "
-        "status bar."
+        "status bar.\n"
+        "  4. Add the server to your MCP client config:\n\n"
+        '     {\n'
+        '       "mcpServers": {\n'
+        '         "ableton-live": {\n'
+        '           "command": "uv",\n'
+        f'           "args": ["run", "--directory", "{repo}", "ableton-mcp"]\n'
+        "         }\n"
+        "       }\n"
+        "     }"
     )
     return 0
 
