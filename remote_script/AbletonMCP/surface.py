@@ -7,7 +7,7 @@ from ableton.v2.control_surface import ControlSurface
 
 from .core.registry import Registry
 from .core.server import BridgeServer
-from .handlers import raw
+from .handlers import register_all
 
 PORT = 9877
 
@@ -21,7 +21,7 @@ class AbletonMCPSurface(ControlSurface):
         self._start_logging()
         try:
             registry = Registry()
-            raw.register(registry, self._roots())
+            register_all(registry, self._roots())
             self._bridge = BridgeServer(registry, port=PORT, logger=logger.info)
             self.schedule_message(0, self._tick)
             self.show_message("AbletonMCP: listening on 127.0.0.1:%d" % PORT)

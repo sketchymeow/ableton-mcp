@@ -18,7 +18,13 @@ length-prefixed JSON frames.
     the tick model makes that hold by construction.
   - `__init__.py` must stay importable outside Live: anything touching
     `Live` or `ableton.v2` imports lazily (see surface.py / handlers/raw.py).
-- `src/ableton_mcp/` is the MCP server (Python 3.11+, FastMCP).
+- `src/ableton_mcp/` is the MCP server (Python 3.11+, `mcp` SDK 2.x). In mcp 2.0
+  FastMCP was renamed: use `from mcp.server import MCPServer` (same decorator
+  API). `mcp.server.fastmcp` no longer exists.
+- MCP tool layer stays thin: trivial one-property reads/writes go through the
+  generic bridge commands (get_property/set_property/call_method); the bridge
+  only gains commands for compound reads, batched writes, or logic that needs
+  Live-side context (e.g. routing matched by display_name).
 - `protocol.py` exists twice on purpose (remote script must be self-contained,
   Live loads it from a folder). Edit both copies; a unit test fails if they drift.
 - One command registry dict in the remote script. Never maintain parallel
