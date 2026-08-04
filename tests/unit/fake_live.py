@@ -32,18 +32,115 @@ class FakeDevice:
         self.parameters = FakeVector(parameters)
 
 
+class FakeMidiNote:
+    def __init__(self, note_id, pitch, start_time, duration, velocity=100.0,
+                 mute=False, probability=1.0, velocity_deviation=0.0,
+                 release_velocity=64.0):
+        self.note_id = note_id
+        self.pitch = pitch
+        self.start_time = start_time
+        self.duration = duration
+        self.velocity = velocity
+        self.mute = mute
+        self.probability = probability
+        self.velocity_deviation = velocity_deviation
+        self.release_velocity = release_velocity
+
+
 class FakeClip:
-    def __init__(self, name="Clip", length=4.0):
+    def __init__(self, name="Clip", length=4.0, is_midi=True):
         self.name = name
         self.length = length
         self.color = 0xFF0000
         self.is_playing = False
+        self.is_recording = False
+        self.is_triggered = False
+        self.is_midi_clip = is_midi
+        self.is_audio_clip = not is_midi
+        self.looping = True
+        self.loop_start = 0.0
+        self.loop_end = length
+        self.start_marker = 0.0
+        self.end_marker = length
+        self.launch_mode = 0
+        self.launch_quantization = 0
+        self.legato = False
+        self.muted = False
+        self.playing_position = 0.0
+        self.signature_numerator = 4
+        self.signature_denominator = 4
+        self.start_time = 0.0
+        self.end_time = length
+        self._notes = []
+        self._next_note_id = 1
+        self.modifications_applied = 0
+
+    def _in_range(self, note, from_pitch, pitch_span, from_time, time_span):
+        return (
+            from_pitch <= note.pitch < from_pitch + pitch_span
+            and from_time <= note.start_time < from_time + time_span
+        )
+
+    def get_notes_extended(self, from_pitch, pitch_span, from_time, time_span):
+        return FakeVector(
+            n for n in self._notes
+            if self._in_range(n, from_pitch, pitch_span, from_time, time_span)
+        )
+
+    def add_new_notes(self, specs):
+        for spec in specs:
+            note = FakeMidiNote(
+                self._next_note_id,
+                spec.pitch,
+                spec.start_time,
+                spec.duration,
+                velocity=spec.velocity,
+                mute=spec.mute,
+            )
+            self._next_note_id += 1
+            self._notes.append(note)
+
+    def apply_note_modifications(self, notes):
+        self.modifications_applied += 1
+
+    def remove_notes_by_id(self, note_ids):
+        self._notes = [n for n in self._notes if n.note_id not in note_ids]
+
+    def remove_notes_extended(self, from_pitch, pitch_span, from_time, time_span):
+        self._notes = [
+            n for n in self._notes
+            if not self._in_range(n, from_pitch, pitch_span, from_time, time_span)
+        ]
+
+
+class FakeMidiNoteSpecification:
+    def __init__(self, pitch, start_time, duration, velocity=100.0, mute=False,
+                 probability=1.0, velocity_deviation=0.0, release_velocity=64.0):
+        self.pitch = pitch
+        self.start_time = start_time
+        self.duration = duration
+        self.velocity = velocity
+        self.mute = mute
+        self.probability = probability
+        self.velocity_deviation = velocity_deviation
+        self.release_velocity = release_velocity
+
+
+def install_fake_live_module():
+    """Register a fake top-level Live module so handlers can import it."""
+    import sys
+    import types
+
+    live = types.ModuleType("Live")
+    live.Clip = types.SimpleNamespace(MidiNoteSpecification=FakeMidiNoteSpecification)
+    sys.modules["Live"] = live
 
 
 class FakeClipSlot:
     def __init__(self, clip=None):
         self.clip = clip
         self.fired = 0
+        self.stopped = 0
 
     @property
     def has_clip(self):
@@ -51,6 +148,15 @@ class FakeClipSlot:
 
     def fire(self):
         self.fired += 1
+
+    def stop(self):
+        self.stopped += 1
+
+    def create_clip(self, length):
+        self.clip = FakeClip(name="", length=length)
+
+    def delete_clip(self):
+        self.clip = None
 
 
 class FakeRoutingType:
@@ -92,10 +198,23 @@ class FakeTrack:
         self.input_routing_channel = self.available_input_routing_channels[0]
         self.output_routing_type = self.available_output_routing_types[0]
         self.output_routing_channel = None
+        self.arrangement_clips = FakeVector(())
         self.stopped = 0
 
     def stop_all_clips(self):
         self.stopped += 1
+
+    def duplicate_clip_to_arrangement(self, clip, time):
+        copy = FakeClip(name=clip.name, length=clip.length,
+                        is_midi=clip.is_midi_clip)
+        copy.start_time = time
+        copy.end_time = time + clip.length
+        self.arrangement_clips = FakeVector(tuple(self.arrangement_clips) + (copy,))
+
+    def delete_clip(self, clip):
+        self.arrangement_clips = FakeVector(
+            c for c in self.arrangement_clips if c is not clip
+        )
 
 
 class FakeMasterTrack:

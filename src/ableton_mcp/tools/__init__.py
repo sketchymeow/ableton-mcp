@@ -1,4 +1,4 @@
-from . import raw, scenes, song, tracks
+from . import clips, notes, raw, scenes, song, tracks
 
 
 def register_all(mcp):
@@ -6,3 +6,5 @@ def register_all(mcp):
     song.register(mcp)
     tracks.register(mcp)
     scenes.register(mcp)
+    clips.register(mcp)
+    notes.register(mcp)

@@ -114,6 +114,47 @@ def scene_summary(scene, index):
     return summary
 
 
+def get_clip_slot(song, track_index, scene_index):
+    track = get_track(song, track_index)
+    slots = safe_get(track, "clip_slots")
+    if slots is None:
+        raise CommandError("this track has no clip slots")
+    try:
+        return slots[scene_index]
+    except (IndexError, TypeError):
+        raise CommandError(
+            "scene index %s out of range (%d slots)" % (scene_index, len(slots))
+        )
+
+
+def get_clip(song, params):
+    """Resolve a clip reference: session (track_index + scene_index) or
+    arrangement (track_index + clip_index with location='arrangement')."""
+    location = params.get("location", "session")
+    track_index = require(params, "track_index")
+    if location == "session":
+        slot = get_clip_slot(song, track_index, require(params, "scene_index"))
+        if not safe_get(slot, "has_clip"):
+            raise CommandError(
+                "no clip at track %s scene %s" % (track_index, params["scene_index"])
+            )
+        return slot.clip
+    if location == "arrangement":
+        track = get_track(song, track_index)
+        clips = safe_get(track, "arrangement_clips")
+        if clips is None:
+            raise CommandError("this track has no arrangement clips")
+        clip_index = require(params, "clip_index")
+        try:
+            return clips[clip_index]
+        except (IndexError, TypeError):
+            raise CommandError(
+                "arrangement clip index %s out of range (%d clips)"
+                % (clip_index, len(clips))
+            )
+    raise CommandError("location must be 'session' or 'arrangement'")
+
+
 def set_with_float_retry(obj, name, value):
     try:
         setattr(obj, name, value)
