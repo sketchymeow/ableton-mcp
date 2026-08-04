@@ -110,14 +110,22 @@ def register(registry, roots):
         param, index = _find_parameter(parameters, selector)
         value = common.require(params, "value")
         if isinstance(value, str):
+            # Option name first; otherwise a number that arrived as a string
+            # (MCP clients often stringify numbers on int/float-or-str fields).
             items = [str(v) for v in common.safe_get(param, "value_items", ())]
             matches = [i for i, item in enumerate(items) if item.lower() == value.lower()]
-            if not matches:
-                raise CommandError(
-                    "%r is not a value of %r; options: %s"
-                    % (value, common.safe_get(param, "name"), ", ".join(items) or "none")
-                )
-            param.value = float(matches[0])
+            if matches:
+                param.value = float(matches[0])
+            else:
+                try:
+                    number = float(value)
+                except ValueError:
+                    raise CommandError(
+                        "%r is not a value of %r; options: %s"
+                        % (value, common.safe_get(param, "name"),
+                           ", ".join(items) or "none (pass a number)")
+                    )
+                common.set_with_float_retry(param, "value", number)
         else:
             common.set_with_float_retry(param, "value", value)
         return _parameter_info(param, index)
@@ -153,6 +161,10 @@ def _find_parameter(parameters, selector):
         if str(common.safe_get(param, "name", "")).lower() == wanted
     ]
     if not matches:
+        # An index that arrived as a string ("3") falls back to index lookup.
+        stripped = wanted.strip()
+        if stripped.lstrip("-").isdigit():
+            return _find_parameter(parameters, int(stripped))
         names = [str(common.safe_get(p, "name")) for p in parameters]
         raise CommandError(
             "no parameter named %r; available: %s" % (selector, ", ".join(names))
