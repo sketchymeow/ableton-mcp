@@ -1,7 +1,8 @@
-from . import automation, clip, device, mixer, notes, raw, scene, song, track
+from . import automation, browser, clip, device, mixer, notes, raw, scene, song, track
 
 
 def register_all(registry, roots):
+    browser.register(registry, roots)
     raw.register(registry, roots)
     song.register(registry, roots)
     track.register(registry, roots)

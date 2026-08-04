@@ -316,6 +316,57 @@ class FakeScene:
         self.fired += 1
 
 
+class FakeBrowserItem:
+    def __init__(self, name, uri=None, is_folder=False, is_loadable=False,
+                 children=()):
+        self.name = name
+        self.uri = uri
+        self.is_folder = is_folder
+        self.is_loadable = is_loadable
+        self.children = FakeVector(children)
+
+
+class FakeBrowser:
+    def __init__(self):
+        self.loaded = []
+        self.instruments = FakeBrowserItem(
+            "Instruments", is_folder=True,
+            children=(
+                FakeBrowserItem(
+                    "Operator", uri="device:operator", is_folder=True,
+                    is_loadable=True,
+                    children=(
+                        FakeBrowserItem("Growl Bass", uri="preset:growl",
+                                        is_loadable=True),
+                    ),
+                ),
+                FakeBrowserItem("Analog", uri="device:analog", is_loadable=True),
+            ),
+        )
+        self.audio_effects = FakeBrowserItem(
+            "Audio Effects", is_folder=True,
+            children=(
+                FakeBrowserItem("Reverb", uri="device:reverb", is_loadable=True),
+            ),
+        )
+        for name in ("sounds", "drums", "midi_effects", "plugins", "samples",
+                     "packs", "user_library", "current_project"):
+            setattr(self, name, FakeBrowserItem(name.title(), is_folder=True))
+
+    def load_item(self, item):
+        self.loaded.append(item)
+
+
+class FakeApp:
+    def __init__(self):
+        self.browser = FakeBrowser()
+
+
+class FakeSongView:
+    def __init__(self):
+        self.selected_track = None
+
+
 class FakeCuePoint:
     def __init__(self, name, time):
         self.name = name
@@ -352,6 +403,7 @@ class FakeSong:
         self.return_tracks = FakeVector(return_tracks)
         self.cue_points = FakeVector(cue_points)
         self.master_track = FakeMasterTrack()
+        self.view = FakeSongView()
         self.started = 0
         self.undone = 0
 
