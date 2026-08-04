@@ -1,4 +1,4 @@
-from . import clips, devices, mixer, notes, raw, scenes, song, tracks
+from . import automation, clips, devices, mixer, notes, raw, scenes, song, tracks
 
 
 def register_all(mcp):
@@ -10,3 +10,4 @@ def register_all(mcp):
     notes.register(mcp)
     mixer.register(mcp)
     devices.register(mcp)
+    automation.register(mcp)

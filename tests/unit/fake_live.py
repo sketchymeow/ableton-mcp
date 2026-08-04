@@ -85,6 +85,22 @@ class FakeMidiNote:
         self.release_velocity = release_velocity
 
 
+class FakeAutomationEnvelope:
+    def __init__(self):
+        self.steps = []
+
+    def insert_step(self, time, length, value):
+        self.steps.append((time, length, value))
+        self.steps.sort(key=lambda s: s[0])
+
+    def value_at_time(self, time):
+        value = 0.0
+        for step_time, _, step_value in self.steps:
+            if step_time <= time:
+                value = step_value
+        return value
+
+
 class FakeClip:
     def __init__(self, name="Clip", length=4.0, is_midi=True):
         self.name = name
@@ -112,6 +128,21 @@ class FakeClip:
         self._notes = []
         self._next_note_id = 1
         self.modifications_applied = 0
+        self._envelopes = {}
+
+    def automation_envelope(self, parameter):
+        return self._envelopes.get(id(parameter))
+
+    def create_automation_envelope(self, parameter):
+        envelope = FakeAutomationEnvelope()
+        self._envelopes[id(parameter)] = envelope
+        return envelope
+
+    def clear_envelope(self, parameter):
+        self._envelopes.pop(id(parameter), None)
+
+    def clear_all_envelopes(self):
+        self._envelopes = {}
 
     def _in_range(self, note, from_pitch, pitch_span, from_time, time_span):
         return (

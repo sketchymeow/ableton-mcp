@@ -1,4 +1,4 @@
-from . import clip, device, mixer, notes, raw, scene, song, track
+from . import automation, clip, device, mixer, notes, raw, scene, song, track
 
 
 def register_all(registry, roots):
@@ -10,3 +10,4 @@ def register_all(registry, roots):
     notes.register(registry, roots)
     mixer.register(registry, roots)
     device.register(registry, roots)
+    automation.register(registry, roots)
