@@ -35,6 +35,12 @@ length-prefixed JSON frames.
 
 - One commit per plan phase. PLAN.md is untracked via .git/info/exclude and
   must never be committed.
+- Update CHANGELOG.md (Keep a Changelog format) with user-visible changes;
+  releases are annotated git tags (vX.Y.Z) matching the version in
+  pyproject.toml and src/ableton_mcp/__init__.py.
+- Integration tests need Live running: ABLETON_MCP_LIVE_TESTS=1
+  uv run pytest tests/integration. CI (.github/workflows/tests.yml) runs the
+  unit suite only.
 - Adding a bridge command: register it in a handler module under
   `remote_script/AbletonMCP/handlers/`, expose it as an MCP tool in
   `src/ableton_mcp/server.py`, add a unit test against the fake LOM.

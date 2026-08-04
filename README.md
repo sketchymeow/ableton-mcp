@@ -45,8 +45,12 @@ Not done yet: a change-event feed (listeners) and an installer script.
 
 Requires Live 11 or newer and [uv](https://docs.astral.sh/uv/).
 
-1. Copy `remote_script/AbletonMCP` into your User Library under
-   `Remote Scripts/` (create the folder if it doesn't exist).
+1. Install the remote script (`--symlink` if you're hacking on it):
+
+```sh
+uv run python scripts/install_remote_script.py
+```
+
 2. Restart Live, then pick AbletonMCP as a control surface under
    Settings > Link, Tempo & MIDI.
 3. Register the server with your MCP client:
@@ -70,4 +74,13 @@ uv run pytest
 ```
 
 Unit tests run against a fake Live object model, so they don't need Live
-running.
+running. CI runs them on every pull request.
+
+With Live open and the control surface enabled, the integration suite does
+real round trips (creates and deletes a scratch track):
+
+```sh
+ABLETON_MCP_LIVE_TESTS=1 uv run pytest tests/integration -v
+```
+
+Releases are tagged from main; see CHANGELOG.md.
