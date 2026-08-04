@@ -156,10 +156,26 @@ def get_clip(song, params):
 
 
 def set_with_float_retry(obj, name, value):
+    """Set a LOM property, absorbing JSON's type looseness.
+
+    Live's float properties reject ints (JSON turns 1.0 into 1) and reject
+    strings outright — but MCP clients stringify numbers on union-typed
+    fields, so "0.32" has to work too. Boost.Python raises its ArgumentError
+    (a TypeError subclass) in both cases.
+    """
     try:
         setattr(obj, name, value)
     except TypeError:
         if isinstance(value, int) and not isinstance(value, bool):
             setattr(obj, name, float(value))
-        else:
-            raise
+            return
+        if isinstance(value, str):
+            try:
+                number = float(value)
+            except ValueError:
+                raise CommandError(
+                    "%s expects a number, got %r" % (name, value)
+                )
+            setattr(obj, name, number)
+            return
+        raise

@@ -31,6 +31,32 @@ def test_set_property(registry):
     assert result == {"value": 90.5}
 
 
+def test_set_property_coerces_string_number(registry):
+    # MCP clients stringify numbers on union-typed fields; Live's float
+    # properties reject strings, so the bridge must parse them.
+    result = registry.dispatch(
+        "set_property",
+        {
+            "path": "song.tracks[0].devices[0].parameters[1]",
+            "property": "value",
+            "value": "0.32",
+        },
+    )
+    assert result == {"value": 0.32}
+
+
+def test_set_property_garbage_string_on_float(registry):
+    with pytest.raises(CommandError, match="expects a number"):
+        registry.dispatch(
+            "set_property",
+            {
+                "path": "song.tracks[0].devices[0].parameters[1]",
+                "property": "value",
+                "value": "loud",
+            },
+        )
+
+
 def test_set_property_coerces_int_to_float(registry):
     # JSON clients send 1 for 1.0; FakeDeviceParameter rejects ints like Live.
     result = registry.dispatch(

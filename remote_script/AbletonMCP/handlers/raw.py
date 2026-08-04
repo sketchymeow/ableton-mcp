@@ -28,15 +28,9 @@ def register(registry, roots):
         name = _require(params, "property")
         if "value" not in params:
             raise CommandError("missing param: value")
-        value = params["value"]
-        try:
-            setattr(obj, name, value)
-        except TypeError:
-            # Live is strict about float properties; JSON turns 1.0 into 1.
-            if isinstance(value, int) and not isinstance(value, bool):
-                setattr(obj, name, float(value))
-            else:
-                raise
+        from .common import set_with_float_retry
+
+        set_with_float_retry(obj, name, params["value"])
         return {"value": lom.safe_value(getattr(obj, name))}
 
     def call_method(params):

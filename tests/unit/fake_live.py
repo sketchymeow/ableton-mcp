@@ -16,9 +16,13 @@ class FakeDeviceParameter:
         self.value_items = FakeVector(value_items)
 
     def __setattr__(self, key, value):
-        # Live rejects ints for float parameters; mimic that strictness.
-        if key == "value" and type(value) is int:
-            raise TypeError("expected float, got int")
+        # Live's float parameters reject ints and strings (Boost.Python
+        # ArgumentError, a TypeError subclass); mimic that strictness.
+        if key == "value" and type(value) in (int, str):
+            raise TypeError(
+                "did not match C++ signature: expected float, got %s"
+                % type(value).__name__
+            )
         object.__setattr__(self, key, value)
 
     def str_for_value(self, value):

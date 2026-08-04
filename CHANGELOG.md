@@ -10,6 +10,8 @@ versions follow [SemVer](https://semver.org/).
 - Continuous device parameters can be set again: numeric values that
   arrive as strings ("0.32") now parse as numbers instead of failing the
   quantized-option match; parameter indexes as strings ("3") also work
+- live_set and every batched property write coerce stringified numbers
+  as well, instead of letting them fail at Live's C++ boundary
 - Browser results no longer blow past MCP clients' 1MB tool-result limit:
   browse output is paged (offset/limit, 500 max) and search results cap
   at 100
