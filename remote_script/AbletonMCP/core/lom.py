@@ -70,6 +70,8 @@ def safe_value(value, depth=0):
         return [safe_value(item, depth + 1) for item in value]
     summary = {"__type__": type(value).__name__}
     name = getattr(value, "name", None)
+    if not isinstance(name, str):
+        name = getattr(value, "display_name", None)
     if isinstance(name, str):
         summary["name"] = name
     return summary

@@ -12,6 +12,10 @@ versions follow [SemVer](https://semver.org/).
   quantized-option match; parameter indexes as strings ("3") also work
 - live_set and every batched property write coerce stringified numbers
   as well, instead of letting them fail at Live's C++ boundary
+- live_set can write object-valued properties: routing properties (e.g.
+  a compressor's sidechain input_routing_type) resolve an index or
+  display name against the available_* list, and a new value_path
+  argument assigns any LOM object (selected_track, selected_drum_pad)
 - Browser results no longer blow past MCP clients' 1MB tool-result limit:
   browse output is paged (offset/limit, 500 max) and search results cap
   at 100

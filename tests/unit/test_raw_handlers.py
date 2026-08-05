@@ -57,6 +57,53 @@ def test_set_property_garbage_string_on_float(registry):
         )
 
 
+def test_set_routing_property_by_display_name(registry):
+    # Object-valued routing property: scalar resolves against available_*.
+    result = registry.dispatch(
+        "set_property",
+        {"path": "song.tracks[0]", "property": "input_routing_type",
+         "value": "Resampling"},
+    )
+    assert result["value"]["name"] == "Resampling"
+
+
+def test_set_routing_property_by_index(registry):
+    result = registry.dispatch(
+        "set_property",
+        {"path": "song.tracks[0]", "property": "input_routing_type", "value": 1},
+    )
+    assert result["value"]["name"] == "Resampling"
+
+
+def test_routing_display_name_beats_digit_index(registry):
+    # Channels are named "1", "1/2"; the string "1" must match the name "1"
+    # (index 0), not be read as index 1.
+    result = registry.dispatch(
+        "set_property",
+        {"path": "song.tracks[0]", "property": "input_routing_channel",
+         "value": "1"},
+    )
+    assert result["value"]["name"] == "1"
+
+
+def test_set_routing_property_bad_option(registry):
+    with pytest.raises(CommandError, match="options: Ext. In, Resampling"):
+        registry.dispatch(
+            "set_property",
+            {"path": "song.tracks[0]", "property": "input_routing_type",
+             "value": "Nope"},
+        )
+
+
+def test_set_object_property_by_value_path(registry):
+    result = registry.dispatch(
+        "set_property",
+        {"path": "song.view", "property": "selected_track",
+         "value_path": "song.tracks[1]"},
+    )
+    assert result["value"]["name"] == "Bass"
+
+
 def test_set_property_coerces_int_to_float(registry):
     # JSON clients send 1 for 1.0; FakeDeviceParameter rejects ints like Live.
     result = registry.dispatch(

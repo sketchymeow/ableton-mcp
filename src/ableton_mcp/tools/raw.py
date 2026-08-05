@@ -24,12 +24,28 @@ def register(mcp):
         )
 
     @mcp.tool()
-    def live_set(path: str, property: str, value: bool | int | float | str) -> dict:
-        """Set a property on any Live Object Model path. Returns the value after
-        the write so you can confirm it took (Live clamps out-of-range values)."""
-        return get_connection().request(
-            "set_property", {"path": path, "property": property, "value": value}
-        )
+    def live_set(
+        path: str,
+        property: str,
+        value: bool | int | float | str | None = None,
+        value_path: str | None = None,
+    ) -> dict:
+        """Set a property on any Live Object Model path. Returns the value
+        after the write so you can confirm it took (Live clamps out-of-range
+        values).
+
+        Routing-style properties (ones with an available_* sibling, like a
+        compressor's sidechain input_routing_type) accept an index or display
+        name and resolve to the right object. For other object-valued
+        properties (view.selected_track, a drum rack view's
+        selected_drum_pad), pass value_path with the LOM path of the object
+        to assign instead of value."""
+        params = {"path": path, "property": property}
+        if value_path is not None:
+            params["value_path"] = value_path
+        else:
+            params["value"] = value
+        return get_connection().request("set_property", params)
 
     @mcp.tool()
     def live_call(path: str, method: str, args: list[Any] | None = None) -> dict:

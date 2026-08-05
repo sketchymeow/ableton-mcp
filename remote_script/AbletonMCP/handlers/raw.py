@@ -6,6 +6,7 @@ hand-written command per property.
 
 from ..core import lom
 from ..core.registry import CommandError
+from . import common
 
 PROTOCOL_VERSION = 1
 
@@ -26,11 +27,21 @@ def register(registry, roots):
     def set_property(params):
         obj = lom.resolve(roots, _require(params, "path"))
         name = _require(params, "property")
+        if "value_path" in params:
+            # Object-valued property: resolve another LOM object and assign it
+            # (e.g. view.selected_track, a drum rack's selected_drum_pad).
+            setattr(obj, name, lom.resolve(roots, params["value_path"]))
+            return {"value": lom.safe_value(getattr(obj, name))}
         if "value" not in params:
             raise CommandError("missing param: value")
-        from .common import set_with_float_retry
-
-        set_with_float_retry(obj, name, params["value"])
+        value = params["value"]
+        options = common.safe_get(obj, "available_%ss" % name)
+        if options:
+            # Routing-style property: Live wants an object out of the
+            # available_* vector, not a scalar. Accept index or display name.
+            setattr(obj, name, _pick_option(options, value, name))
+        else:
+            common.set_with_float_retry(obj, name, value)
         return {"value": lom.safe_value(getattr(obj, name))}
 
     def call_method(params):
@@ -68,6 +79,33 @@ def register(registry, roots):
             "describe": describe,
             "ping": ping,
         }
+    )
+
+
+def _pick_option(options, value, name):
+    if isinstance(value, bool):
+        raise CommandError(
+            "%s takes an index or display name from available_%ss" % (name, name)
+        )
+    if isinstance(value, (int, float)):
+        index = int(value)
+        try:
+            return options[index]
+        except IndexError:
+            raise CommandError(
+                "index %d out of range for available_%ss (%d options)"
+                % (index, name, len(options))
+            )
+    wanted = str(value).strip().lower()
+    for option in options:
+        display = common.safe_get(option, "display_name")
+        if display is not None and str(display).lower() == wanted:
+            return option
+    if wanted.lstrip("-").isdigit():
+        return _pick_option(options, int(wanted), name)
+    names = [str(common.safe_get(o, "display_name")) for o in options]
+    raise CommandError(
+        "no %s option matching %r; options: %s" % (name, value, ", ".join(names))
     )
 
 
