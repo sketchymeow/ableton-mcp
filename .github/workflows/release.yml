@@ -14,13 +14,17 @@ jobs:
       run:
         working-directory: server
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: 24
       - run: npm ci
       - run: npm test
       - run: npm run build:mcpb
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: server/dist/ableton-mcp.mcpb
+      - name: Attach bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes \
+            dist/ableton-mcp.mcpb ||
+          gh release upload "$GITHUB_REF_NAME" dist/ableton-mcp.mcpb --clobber
