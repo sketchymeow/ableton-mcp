@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from ableton_mcp.protocol import FrameDecoder, encode
+from AbletonMCP.core.protocol import FrameDecoder, encode
 from AbletonMCP.core.registry import Registry
 from AbletonMCP.core.server import BridgeServer
 from AbletonMCP.handlers import raw

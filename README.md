@@ -8,12 +8,12 @@ processes talking over TCP on localhost:
 - `remote_script/AbletonMCP` runs inside Live as a control surface. It polls a
   non-blocking socket from Live's main thread on a 100ms tick, so every
   command runs on the main thread and no threading hacks are needed.
-- `src/ableton_mcp` is the MCP server. It translates tool calls into bridge
-  commands over a length-prefixed JSON protocol.
+- `server/` is the MCP server (TypeScript, Node). It translates tool calls
+  into bridge commands over a length-prefixed JSON protocol.
 
 ## What it can do
 
-41 tools across two layers.
+46 tools across two layers.
 
 Curated tools:
 
@@ -39,15 +39,17 @@ the entire Live Object Model through paths like
 `song.tracks[0].devices[0].parameters[3]`, covering anything the curated
 tools don't.
 
-Not done yet: a change-event feed (listeners) and an installer script.
+Plus a change-event feed (subscribe to any listenable Live property, poll
+by cursor) and self-setup tools that install the remote script for you.
 
 ## Setup
 
 ### Claude Desktop (no tools required)
 
-1. Download the `.mcpb` for your platform from the
+1. Download `ableton-mcp.mcpb` from the
    [latest release](https://github.com/sketchymeow/ableton-mcp/releases) and
-   open it — Claude Desktop installs it like a browser extension.
+   open it — Claude Desktop installs it like a browser extension. One file
+   for every platform; no Python, Node, or uv install needed.
 2. Ask Claude to set up Ableton: it installs the remote script itself via
    the `install_remote_script` tool.
 3. Restart Live and enable AbletonMCP under
@@ -55,26 +57,31 @@ Not done yet: a change-event feed (listeners) and an installer script.
 
 ### From a checkout
 
-Requires Live 11 or newer and [uv](https://docs.astral.sh/uv/).
+Requires Live 11 or newer and Node 18+.
 
-1. Install the remote script (`--symlink` if you're hacking on it):
+1. Build the server:
 
 ```sh
-uv run python scripts/install_remote_script.py
+cd server && npm install && npm run build
 ```
 
-2. Restart Live, then pick AbletonMCP as a control surface under
+2. Install the remote script (`--symlink` if you're hacking on it):
+
+```sh
+python3 scripts/install_remote_script.py
+```
+
+3. Restart Live, then pick AbletonMCP as a control surface under
    Settings > Link, Tempo & MIDI.
-3. Register the server with your MCP client. The `--directory` value is the
-   absolute path to this cloned repo (the install script prints a config
-   with the path filled in):
+4. Register the server with your MCP client, using the absolute path to
+   this cloned repo:
 
 ```json
 {
   "mcpServers": {
     "ableton-live": {
-      "command": "uv",
-      "args": ["run", "--directory", "/Users/you/dev/ableton-mcp", "ableton-mcp"]
+      "command": "node",
+      "args": ["/Users/you/dev/ableton-mcp/server/dist/index.js"]
     }
   }
 }
@@ -82,13 +89,17 @@ uv run python scripts/install_remote_script.py
 
 ## Development
 
+Two halves, two test suites:
+
 ```sh
-uv sync
-uv run pytest
+# remote script (python, runs against a fake Live object model)
+uv sync && uv run pytest
+
+# MCP server (typescript)
+cd server && npm install && npm test && npx tsc --noEmit
 ```
 
-Unit tests run against a fake Live object model, so they don't need Live
-running. CI runs them on every pull request.
+Neither suite needs Live running. CI runs both on every pull request.
 
 With Live open and the control surface enabled, the integration suite does
 real round trips (creates and deletes a scratch track):

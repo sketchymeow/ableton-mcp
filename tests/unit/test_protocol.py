@@ -1,10 +1,6 @@
-from pathlib import Path
-
 import pytest
 
-from ableton_mcp.protocol import FrameDecoder, FrameError, HEADER, encode
-
-ROOT = Path(__file__).resolve().parents[2]
+from AbletonMCP.core.protocol import FrameDecoder, FrameError, HEADER, encode
 
 
 def test_roundtrip():
@@ -37,10 +33,3 @@ def test_invalid_payload_rejected():
     decoder = FrameDecoder()
     with pytest.raises(FrameError):
         decoder.feed(HEADER.pack(3) + b"{{{")
-
-
-def test_protocol_copies_are_identical():
-    # The remote script must be self-contained, so protocol.py exists twice.
-    server_copy = ROOT / "src" / "ableton_mcp" / "protocol.py"
-    script_copy = ROOT / "remote_script" / "AbletonMCP" / "core" / "protocol.py"
-    assert server_copy.read_text() == script_copy.read_text()

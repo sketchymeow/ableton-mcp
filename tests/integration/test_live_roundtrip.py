@@ -7,18 +7,45 @@ Run with Live open and the AbletonMCP control surface enabled:
 These create and delete a scratch track; they don't touch existing tracks.
 """
 
+import socket
+
 import pytest
 
-from ableton_mcp.connection import AbletonConnection
+from AbletonMCP.core.protocol import FrameDecoder, encode
 
 pytestmark = pytest.mark.live
 
 
+class BridgeClient:
+    """Minimal test client speaking the bridge protocol directly."""
+
+    def __init__(self, host="127.0.0.1", port=9877):
+        self.sock = socket.create_connection((host, port), timeout=15.0)
+        self.decoder = FrameDecoder()
+        self.next_id = 1
+
+    def request(self, command, params=None):
+        request_id = self.next_id
+        self.next_id += 1
+        self.sock.sendall(encode({"id": request_id, "command": command,
+                                  "params": params or {}}))
+        while True:
+            for message in self.decoder.feed(self.sock.recv(65536)):
+                if message.get("id") != request_id:
+                    continue
+                if message.get("status") == "ok":
+                    return message.get("result")
+                raise AssertionError(message.get("error"))
+
+    def close(self):
+        self.sock.close()
+
+
 @pytest.fixture(scope="module")
 def conn():
-    connection = AbletonConnection()
-    yield connection
-    connection.close()
+    client = BridgeClient()
+    yield client
+    client.close()
 
 
 @pytest.fixture()
@@ -35,9 +62,7 @@ def test_ping(conn):
 
 
 def test_track_roundtrip(conn, scratch_track):
-    conn.request(
-        "set_track", {"track_index": scratch_track, "name": "MCP Scratch"}
-    )
+    conn.request("set_track", {"track_index": scratch_track, "name": "MCP Scratch"})
     detail = conn.request("get_track", {"track_index": scratch_track})
     assert detail["name"] == "MCP Scratch"
 
@@ -56,9 +81,8 @@ def test_notes_roundtrip(conn, scratch_track):
     notes = conn.request("get_notes", clip)["notes"]
     assert sorted(n["pitch"] for n in notes) == [60, 64, 67]
     first_id = notes[0]["note_id"]
-    conn.request(
-        "update_notes", dict(clip, notes=[{"note_id": first_id, "velocity": 40}])
-    )
+    conn.request("update_notes",
+                 dict(clip, notes=[{"note_id": first_id, "velocity": 40}]))
     updated = conn.request("get_notes", clip)["notes"]
     assert any(n["velocity"] == 40 for n in updated)
 

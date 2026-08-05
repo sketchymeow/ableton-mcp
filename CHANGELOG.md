@@ -5,6 +5,17 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-04
+
+### Changed
+
+- The MCP server is now TypeScript/Node instead of Python. Same 46 tools,
+  same wire protocol, same remote script. Claude Desktop bundles shrink
+  from a 22MB per-platform binary to one 182KB .mcpb that runs on
+  Desktop's own Node runtime - no Python, uv, or signing concerns.
+- From a checkout, the server runs with node (see README); the Python side
+  of the repo is now just the remote script and its test harness.
+
 ## [0.2.0] - 2026-08-04
 
 ### Added

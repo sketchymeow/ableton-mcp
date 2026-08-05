@@ -1,0 +1,44 @@
+{
+  "name": "ableton-mcp",
+  "version": "0.3.0",
+  "description": "MCP server for controlling Ableton Live",
+  "type": "module",
+  "bin": {
+    "ableton-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "remote_script"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "node build.mjs",
+    "build:mcpb": "node build.mjs --mcpb"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sketchymeow/ableton-mcp"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@anthropic-ai/mcpb": "^2.1.2",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.19.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "esbuild@0.24.2": true,
+    "esbuild@0.28.1": true
+  }
+}

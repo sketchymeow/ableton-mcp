@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# node server
+server/node_modules/
+server/dist/
+server/remote_script/
