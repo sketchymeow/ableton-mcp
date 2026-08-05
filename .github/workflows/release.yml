@@ -1,0 +1,27 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Apple silicon, Intel mac, Windows — the platforms Live runs on.
+        os: [macos-14, macos-13, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync
+      - run: uv run pytest -q
+      - run: uv run python packaging/build_mcpb.py
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.mcpb

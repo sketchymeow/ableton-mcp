@@ -7,22 +7,12 @@ apply on the next Live restart without reinstalling.
 """
 
 import argparse
-import platform
-import shutil
 import sys
 from pathlib import Path
 
-SOURCE = Path(__file__).resolve().parents[1] / "remote_script" / "AbletonMCP"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-
-def default_dest() -> Path | None:
-    home = Path.home()
-    system = platform.system()
-    if system == "Darwin":
-        return home / "Music" / "Ableton" / "User Library" / "Remote Scripts"
-    if system == "Windows":
-        return home / "Documents" / "Ableton" / "User Library" / "Remote Scripts"
-    return None
+from ableton_mcp.installer import InstallError, install, remote_script_source
 
 
 def main() -> int:
@@ -40,37 +30,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    dest = args.dest or default_dest()
-    if dest is None:
-        print("Could not guess the Remote Scripts folder on this OS; pass --dest.")
+    try:
+        result = install(dest=args.dest, symlink=args.symlink)
+    except InstallError as exc:
+        print(f"Error: {exc}")
         return 1
 
-    dest.mkdir(parents=True, exist_ok=True)
-    target = dest / "AbletonMCP"
-    if target.is_symlink() or target.is_file():
-        target.unlink()
-    elif target.is_dir():
-        shutil.rmtree(target)
+    verb = "Symlinked" if result["mode"] == "symlink" else "Copied"
+    print(f"{verb} {remote_script_source()} -> {result['installed_to']}")
+    print("\nNext steps:")
+    for i, step in enumerate(result["next_steps"], 1):
+        print(f"  {i}. {step}")
 
-    if args.symlink:
-        target.symlink_to(SOURCE, target_is_directory=True)
-        print(f"Symlinked {target} -> {SOURCE}")
-    else:
-        shutil.copytree(
-            SOURCE, target,
-            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "logs"),
-        )
-        print(f"Copied {SOURCE} -> {target}")
-
-    repo = SOURCE.parents[1]
+    repo = Path(__file__).resolve().parents[1]
     print(
-        "\nNext steps:\n"
-        "  1. Restart Ableton Live.\n"
-        "  2. Settings > Link, Tempo & MIDI > Control Surface > AbletonMCP.\n"
-        "  3. Look for 'AbletonMCP: listening on 127.0.0.1:9877' in Live's "
-        "status bar.\n"
-        "  4. Add the server to your MCP client config:\n\n"
-        '     {\n'
+        "\n  4. Add the server to your MCP client config:\n\n"
+        "     {\n"
         '       "mcpServers": {\n'
         '         "ableton-live": {\n'
         '           "command": "uv",\n'

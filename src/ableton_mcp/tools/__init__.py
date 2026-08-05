@@ -1,10 +1,11 @@
 from . import (automation, browser, clips, devices, events, mixer, notes, raw,
-               scenes, song, tracks)
+               scenes, setup, song, tracks)
 
 
 def register_all(mcp):
     browser.register(mcp)
     events.register(mcp)
+    setup.register(mcp)
     raw.register(mcp)
     song.register(mcp)
     tracks.register(mcp)

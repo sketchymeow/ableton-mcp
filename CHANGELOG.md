@@ -5,6 +5,14 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Claude Desktop one-click install: releases ship self-contained .mcpb
+  bundles (PyInstaller binary, no Python or uv needed) for Apple silicon,
+  Intel mac, and Windows
+- install_remote_script and remote_script_status tools, so Claude can set
+  up the Live side itself; connection errors point the model at them
+
 ## [0.1.0] - 2026-08-04
 
 Initial release.

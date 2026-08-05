@@ -43,6 +43,18 @@ Not done yet: a change-event feed (listeners) and an installer script.
 
 ## Setup
 
+### Claude Desktop (no tools required)
+
+1. Download the `.mcpb` for your platform from the
+   [latest release](https://github.com/sketchymeow/ableton-mcp/releases) and
+   open it — Claude Desktop installs it like a browser extension.
+2. Ask Claude to set up Ableton: it installs the remote script itself via
+   the `install_remote_script` tool.
+3. Restart Live and enable AbletonMCP under
+   Settings > Link, Tempo & MIDI > Control Surface.
+
+### From a checkout
+
 Requires Live 11 or newer and [uv](https://docs.astral.sh/uv/).
 
 1. Install the remote script (`--symlink` if you're hacking on it):

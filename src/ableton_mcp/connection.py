@@ -13,7 +13,9 @@ DEFAULT_TIMEOUT = 12.0
 NOT_RUNNING_HINT = (
     "Could not reach Ableton Live on {host}:{port}. Make sure Live is running "
     "and the AbletonMCP control surface is enabled in "
-    "Settings > Link/Tempo/MIDI."
+    "Settings > Link/Tempo/MIDI. If the remote script was never installed, "
+    "check with remote_script_status and install it with "
+    "install_remote_script, then have the user restart Live."
 )
 
 
