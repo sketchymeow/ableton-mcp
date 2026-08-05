@@ -362,6 +362,15 @@ class FakeBrowser:
         for name in ("sounds", "drums", "midi_effects", "plugins", "samples",
                      "packs", "user_library", "current_project"):
             setattr(self, name, FakeBrowserItem(name.title(), is_folder=True))
+        self.user_folders = FakeVector((
+            FakeBrowserItem(
+                "My Samples", is_folder=True,
+                children=(
+                    FakeBrowserItem("kick_01.wav", uri="userfile:kick01",
+                                    is_loadable=True),
+                ),
+            ),
+        ))
 
     def load_item(self, item):
         self.loaded.append(item)

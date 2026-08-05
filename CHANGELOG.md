@@ -5,6 +5,16 @@ versions follow [SemVer](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Browser access to Places: the user_folders root lists folders added to
+  Live's sidebar, browsable and searchable like any other root
+- Tool-to-bridge mapping tests: the server now runs end-to-end against a
+  mock bridge in CI, locking down the command and params every tool sends
+- Live integration tests for the earlier bug classes: stringified
+  numbers, routing by display name, value_path, browser size caps, and
+  device parameter sets against a freshly loaded device
+
 ## [0.3.0] - 2026-08-04
 
 ### Changed

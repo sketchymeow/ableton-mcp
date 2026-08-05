@@ -170,6 +170,12 @@ export class AbletonConnection {
 let connection: AbletonConnection | null = null;
 
 export function getConnection(): AbletonConnection {
-  connection ??= new AbletonConnection();
+  // Env overrides exist for tests (point the server at a mock bridge).
+  connection ??= new AbletonConnection(
+    process.env.ABLETON_MCP_HOST ?? DEFAULT_HOST,
+    process.env.ABLETON_MCP_PORT
+      ? Number(process.env.ABLETON_MCP_PORT)
+      : DEFAULT_PORT,
+  );
   return connection;
 }

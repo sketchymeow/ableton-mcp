@@ -6,6 +6,7 @@ import { bridge, type Registrar } from "./helpers.js";
 const root = z.enum([
   "instruments", "sounds", "drums", "audio_effects", "midi_effects",
   "plugins", "samples", "packs", "user_library", "current_project",
+  "user_folders",
 ]);
 const trackType = z.enum(["track", "return", "master"]).default("track");
 
@@ -16,9 +17,10 @@ export const register: Registrar = (server) => {
       description:
         "List one level of Live's browser. path drills down from the root " +
         'by item name or index (e.g. ["Operator"] lists Operator\'s ' +
-        "presets). Loadable items have a uri for load_browser_item. Output " +
-        "is paged (max 500 per call); check total and pass offset for the " +
-        "rest.",
+        "presets). The user_folders root is the user's Places (folders " +
+        "they added to the sidebar). Loadable items have a uri for " +
+        "load_browser_item. Output is paged (max 500 per call); check " +
+        "total and pass offset for the rest.",
       inputSchema: z.object({
         root: root.default("instruments"),
         path: z.array(z.union([z.string(), z.number().int()])).default([]),

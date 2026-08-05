@@ -72,6 +72,24 @@ def test_browse_bad_name(registry):
         registry.dispatch("browse", {"root": "instruments", "path": ["Wavetable"]})
 
 
+def test_browse_user_folders(registry):
+    # Places: browser.user_folders is a vector of roots, one per folder.
+    result = registry.dispatch("browse", {"root": "user_folders"})
+    assert result["path"] == ["Places"]
+    assert [i["name"] for i in result["items"]] == ["My Samples"]
+    nested = registry.dispatch(
+        "browse", {"root": "user_folders", "path": ["My Samples"]}
+    )
+    assert nested["items"][0]["uri"] == "userfile:kick01"
+
+
+def test_search_user_folders(registry):
+    result = registry.dispatch(
+        "search_browser", {"query": "kick", "roots": ["user_folders"]}
+    )
+    assert [m["name"] for m in result["matches"]] == ["kick_01.wav"]
+
+
 def test_browse_bad_root(registry):
     with pytest.raises(CommandError, match="unknown root"):
         registry.dispatch("browse", {"root": "vsts"})

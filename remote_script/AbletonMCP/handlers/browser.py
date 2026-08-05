@@ -20,7 +20,21 @@ ROOT_NAMES = (
     "packs",
     "user_library",
     "current_project",
+    "user_folders",
 )
+
+
+class _VirtualRoot(object):
+    """Wraps browser.user_folders (a vector of roots, one per Place) so the
+    rest of the handler can treat Places like any other root."""
+
+    is_folder = True
+    is_loadable = False
+    uri = None
+
+    def __init__(self, name, children):
+        self.name = name
+        self.children = children
 
 DEFAULT_SEARCH_ROOTS = (
     "instruments",
@@ -64,6 +78,10 @@ def register(registry, roots):
         if name not in ROOT_NAMES:
             raise CommandError(
                 "unknown root %r; roots: %s" % (name, ", ".join(ROOT_NAMES))
+            )
+        if name == "user_folders":
+            return _VirtualRoot(
+                "Places", common.safe_get(browser(), "user_folders", ())
             )
         item = common.safe_get(browser(), name)
         if item is None:
